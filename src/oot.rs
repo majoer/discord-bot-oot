@@ -1,11 +1,6 @@
-use serde::de::value::Error;
 use serde_derive::{Deserialize, Serialize};
-use serde_json::{Map, Number, Result, Value};
-use std::{
-    collections::{hash_map, BTreeMap, HashMap},
-    hash::Hash,
-    str::Split,
-};
+use std::collections::HashMap;
+use tracing::error;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct Settings {}
@@ -108,7 +103,7 @@ pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
     let spoiler_log: Log = match serde_json::from_str(&spoiler_log_str) {
         Ok(content) => content,
         Err(why) => {
-            println!("{:?}", why);
+            error!("{:?}", why);
             panic!("Unable to parse file")
         }
     };

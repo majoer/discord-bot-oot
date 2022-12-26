@@ -18,10 +18,10 @@ impl EventHandler for Bot {
 
         if let Err(why) = msg
             .channel_id
-            .say(&ctx.http, "Takk! Vent litt, mens tørrfesken tørka")
+            .say(&ctx.http, "Takk! Vent litt, mens tørrfesken tørka...")
             .await
         {
-            println!("Error sending message: {:?}", why);
+            error!("Error sending message: {:?}", why);
             return;
         }
 
@@ -32,14 +32,20 @@ impl EventHandler for Bot {
                 let spoiler_log = oot::parse_spoiler_log(json);
                 let files = vec![(spoiler_log.as_bytes(), "spoiler-log.txt")];
 
-                msg.channel_id
+                if let Err(why) = msg
+                    .channel_id
                     .send_files(&ctx.http, files, |m| m.content("Her e spoiler loggen!"))
-                    .await;
-                return;
+                    .await
+                {
+                    error!("Error sending message: {:?}", why);
+                    return;
+                }
             }
             Err(why) => {
-                println!("Error downloading attachment: {:?}", why);
-                let _ = msg.channel_id.say(&ctx.http, "sadsd");
+                error!("Error downloading attachment: {:?}", why);
+                let _ = msg
+                    .channel_id
+                    .say(&ctx.http, "Tørrfesken vart blaut. Kontakt support!");
 
                 return;
             }
@@ -55,15 +61,15 @@ impl EventHandler for Bot {
 async fn serenity(
     #[shuttle_secrets::Secrets] secret_store: SecretStore,
 ) -> shuttle_service::ShuttleSerenity {
-    // Get the discord token set in `Secrets.toml`
     let token = if let Some(token) = secret_store.get("DISCORD_TOKEN") {
         token
     } else {
         return Err(anyhow!("'DISCORD_TOKEN' was not found").into());
     };
 
-    // Set gateway intents, which decides what events the bot will be notified about
-    let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::MESSAGE_CONTENT;
+    let intents = GatewayIntents::GUILD_MESSAGES
+        | GatewayIntents::MESSAGE_CONTENT
+        | GatewayIntents::DIRECT_MESSAGES;
 
     let client = Client::builder(&token, intents)
         .event_handler(Bot)
