@@ -6,16 +6,44 @@ use serenity::prelude::*;
 use shuttle_secrets::SecretStore;
 use tracing::{error, info};
 
+mod oot;
 struct Bot;
 
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content == "!hello" {
-            if let Err(e) = msg.channel_id.say(&ctx.http, "world!").await {
-                error!("Error sending message: {:?}", e);
-            }
+        if msg.attachments.len() != 1 || msg.author.bot {
+            return;
         }
+
+        if let Err(why) = msg
+            .channel_id
+            .say(&ctx.http, "Takk! Vent litt, mens tørrfesken tørka")
+            .await
+        {
+            println!("Error sending message: {:?}", why);
+            return;
+        }
+
+        let attachment = msg.attachments.get(0).unwrap();
+        match attachment.download().await {
+            Ok(content) => {
+                let json = String::from_utf8(content).ok().unwrap();
+                let spoiler_log = oot::parse_spoiler_log(json);
+                let files = vec![(spoiler_log.as_bytes(), "spoiler-log.txt")];
+
+                msg.channel_id
+                    .send_files(&ctx.http, files, |m| m.content("Her e spoiler loggen!"))
+                    .await;
+                return;
+            }
+            Err(why) => {
+                println!("Error downloading attachment: {:?}", why);
+                let _ = msg.channel_id.say(&ctx.http, "sadsd");
+
+                return;
+            }
+        };
     }
 
     async fn ready(&self, _: Context, ready: Ready) {
