@@ -99,7 +99,7 @@ struct ItemLocation {
     world: String,
 }
 
-pub fn ignoredKeys() -> Vec<&'static str> {
+pub fn ignored_keys() -> Vec<&'static str> {
     return vec![
         "Arrows (10)",
         "Arrows (30)",
@@ -171,7 +171,7 @@ pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
     let mut item_names: Vec<&String> = Vec::from_iter(
         item_locations
             .keys()
-            .filter(|key| !ignoredKeys().contains(&key.as_str())),
+            .filter(|key| !ignored_keys().contains(&key.as_str())),
     );
     let mut result = Vec::new();
 

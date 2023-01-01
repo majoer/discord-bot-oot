@@ -41,7 +41,7 @@ impl EventHandler for Bot {
         if msg.content.eq("!ignore") {
             if let Err(why) = msg
                 .channel_id
-                .say(&ctx.http, format!("{}", oot::ignoredKeys().join("\n")))
+                .say(&ctx.http, format!("{}", oot::ignored_keys().join("\n")))
                 .await
             {
                 error!("Error sending message: {:?}", why);
