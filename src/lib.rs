@@ -1,4 +1,5 @@
 use anyhow::anyhow;
+use serde_json::json;
 use serenity::async_trait;
 use serenity::model::channel::Message;
 use serenity::model::gateway::Ready;
@@ -9,10 +10,37 @@ use tracing::{error, info};
 mod oot;
 struct Bot;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const CHANNEL_ID: u64 = 1017171112901218334;
+
 #[async_trait]
 impl EventHandler for Bot {
     async fn message(&self, ctx: Context, msg: Message) {
-        if msg.attachments.len() != 1 || msg.author.bot {
+        if !msg.channel_id.as_u64().eq(&CHANNEL_ID) {
+            return;
+        }
+
+        if msg.author.bot {
+            return;
+        }
+
+        if msg.content.eq("!siggud") {
+            if let Err(why) = msg
+                .channel_id
+                .say(&ctx.http, format!("Siggurd version {}", VERSION))
+                .await
+            {
+                error!("Error sending message: {:?}", why);
+                return;
+            }
+        }
+
+        if msg.attachments.len() != 1 {
+            return;
+        }
+
+        let attachment = msg.attachments.get(0).unwrap();
+        if !attachment.filename.ends_with("Spoiler.json") {
             return;
         }
 
@@ -25,7 +53,6 @@ impl EventHandler for Bot {
             return;
         }
 
-        let attachment = msg.attachments.get(0).unwrap();
         match attachment.download().await {
             Ok(content) => {
                 let json = String::from_utf8(content).ok().unwrap();
@@ -52,8 +79,16 @@ impl EventHandler for Bot {
         };
     }
 
-    async fn ready(&self, _: Context, ready: Ready) {
+    async fn ready(&self, ctx: Context, ready: Ready) {
         info!("{} is connected!", ready.user.name);
+        let message = format!("Siggurd online! Version {}", VERSION);
+        // let json: serde_json::Value = serde_json::Value::String(message);
+        let json: serde_json::Value = json!({ "content": message });
+
+        if let Err(why) = ctx.http.send_message(CHANNEL_ID, &json).await {
+            error!("Error sending message: {:?}", why);
+            return;
+        }
     }
 }
 
