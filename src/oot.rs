@@ -131,7 +131,6 @@ pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
         "Arrows (10)",
         "Arrows (30)",
         "Arrows (5)",
-        "Bombchus",
         "Bombs (10)",
         "Bombs (20)",
         "Bombs (5)",
