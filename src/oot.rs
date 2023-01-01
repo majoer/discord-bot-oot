@@ -99,35 +99,8 @@ struct ItemLocation {
     world: String,
 }
 
-pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
-    let spoiler_log: Log = match serde_json::from_str(&spoiler_log_str) {
-        Ok(content) => content,
-        Err(why) => {
-            error!("{:?}", why);
-            panic!("Unable to parse file")
-        }
-    };
-
-    let mut item_locations: HashMap<String, Vec<ItemLocation>> = HashMap::new();
-
-    for (world_name, world) in &spoiler_log.locations {
-        for (location, item) in world {
-            if !item_locations.contains_key(&item.item) {
-                item_locations.insert(item.item.to_string(), Vec::new());
-            }
-
-            item_locations
-                .get_mut(&item.item)
-                .unwrap()
-                .push(ItemLocation {
-                    location: (location.to_string()),
-                    player: (item.player),
-                    world: (world_name.to_string()),
-                });
-        }
-    }
-
-    let ignored_keys = vec![
+pub fn ignoredKeys() -> Vec<&'static str> {
+    return vec![
         "Arrows (10)",
         "Arrows (30)",
         "Arrows (5)",
@@ -165,10 +138,40 @@ pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
         "Rupees (5)",
         "Rupees (50)",
     ];
+}
+
+pub fn parse_spoiler_log(spoiler_log_str: String) -> String {
+    let spoiler_log: Log = match serde_json::from_str(&spoiler_log_str) {
+        Ok(content) => content,
+        Err(why) => {
+            error!("{:?}", why);
+            panic!("Unable to parse file")
+        }
+    };
+
+    let mut item_locations: HashMap<String, Vec<ItemLocation>> = HashMap::new();
+
+    for (world_name, world) in &spoiler_log.locations {
+        for (location, item) in world {
+            if !item_locations.contains_key(&item.item) {
+                item_locations.insert(item.item.to_string(), Vec::new());
+            }
+
+            item_locations
+                .get_mut(&item.item)
+                .unwrap()
+                .push(ItemLocation {
+                    location: (location.to_string()),
+                    player: (item.player),
+                    world: (world_name.to_string()),
+                });
+        }
+    }
+
     let mut item_names: Vec<&String> = Vec::from_iter(
         item_locations
             .keys()
-            .filter(|key| !ignored_keys.contains(&key.as_str())),
+            .filter(|key| !ignoredKeys().contains(&key.as_str())),
     );
     let mut result = Vec::new();
 

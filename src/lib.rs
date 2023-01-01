@@ -27,7 +27,21 @@ impl EventHandler for Bot {
         if msg.content.eq("!siggud") {
             if let Err(why) = msg
                 .channel_id
-                .say(&ctx.http, format!("Siggurd version {}", VERSION))
+                .say(
+                    &ctx.http,
+                    format!("Siggurd version {}\n    !ignore - Vis ignore-list", VERSION),
+                )
+                .await
+            {
+                error!("Error sending message: {:?}", why);
+                return;
+            }
+        }
+
+        if msg.content.eq("!ignore") {
+            if let Err(why) = msg
+                .channel_id
+                .say(&ctx.http, format!("{}", oot::ignoredKeys().join("\n")))
                 .await
             {
                 error!("Error sending message: {:?}", why);
